@@ -1,0 +1,53 @@
+@startuml Basic Sample
+
+title Архитектура системы "Будущее 2.0" через год
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(operator, "Оператор")
+Person(data_analyst, "Бизнес аналитик")
+
+
+System_Boundary(future_2_0, "Будущее 2.0", "Медицинская компания") {
+    System(ml_services, "ИИ-сервисы", "Software System")
+    System(fin_tech_services, "Фин-тех сервисы", "Software System")
+    System(private_services, "Внутренние сервисы", "Software System")
+
+    System_Boundary(data_mart, "Витрины данных", "Данные по бизнес-доменам") {
+        Container(bi_fe, "Портал аналитики", "React.js", "Интерфейс витрин данных")
+
+        Container(bi_bff, "Бэкенд для портала аналитики", "Node.js", "Собирает данные для аналитики")
+
+        ContainerDb(data_mart_1, "Витрина данных", "Greenplum",)
+        ContainerDb(data_mart_2, "Витрина данных", "ClickHouse",)
+    }
+
+    Container(operator_ui, "Клиентский интерфейс оператора", "Power Builder")
+    Container(esb, "Шина данных предприятия", "Apache Camel", "Мониторинг, интеграция, обмен данными")
+    ContainerDb(dwh, "Data Warehouse", "SQL Server")
+
+    Container(etl, "ETL система", "Apache NiFI", "Извлечение и преобразование данных")
+}
+
+Rel_D(operator, operator_ui, "Использует", "UI")
+Rel_D(data_analyst, bi_fe, "Использует", "UI")
+
+Rel_D(operator_ui, dwh, "Использует", "SQL")
+BiRel_D(dwh, esb, "Данные предприятия")
+BiRel_R(ml_services, esb, "Медицинские данные")
+BiRel_U(private_services, esb, "Внутренние финансовые данные, управление клиниками, прочее")
+BiRel_L(fin_tech_services, esb, "Финансовые данные")
+
+Rel_D(bi_fe, bi_bff, "Использует API", "REST")
+Rel_D(bi_bff, data_mart_1, "Выгружает данные", "SQL")
+Rel_D(bi_bff, data_mart_2, "Выгружает данные", "SQL")
+
+Rel_U(etl, data_mart_1, "Загружает данные", "SQL")
+Rel_U(etl, data_mart_2, "Загружает данные", "SQL")
+
+Rel( dwh, etl, "Миграция данных" )
+Rel( ml_services, etl, "Данные для аналитики" )
+Rel( private_services, etl, "Данные для аналитики" )
+Rel( fin_tech_services, etl, "Данные для аналитики" )
+
+@enduml
